@@ -1,11 +1,15 @@
+import { describeWithDOM, describeIf } from './_helpers';
 import React from 'react';
 import { expect } from 'chai';
-import { shallow, render, ShallowWrapper } from '../';
+import {
+  mount,
+  render,
+  ReactWrapper,
+} from '../src/';
 import sinon from 'sinon';
-import { describeIf } from './_helpers';
-import { REACT013 } from '../version';
+import { REACT013 } from '../src/version';
 
-describe('shallow', () => {
+describeWithDOM('mount', () => {
 
   describe('context', () => {
     const context = { name: 'foo' };
@@ -20,7 +24,7 @@ describe('shallow', () => {
         },
       });
 
-      const wrapper = shallow(<SimpleComponent />, { context });
+      const wrapper = mount(<SimpleComponent />, { context });
       expect(wrapper.text()).to.equal('foo');
     });
 
@@ -31,7 +35,7 @@ describe('shallow', () => {
         },
       });
 
-      expect(() => shallow(<SimpleComponent />, { context })).to.not.throw(Error);
+      expect(() => mount(<SimpleComponent />, { context })).to.not.throw(Error);
     });
 
     it('is instrospectable through context API', () => {
@@ -44,7 +48,7 @@ describe('shallow', () => {
         },
       });
 
-      const wrapper = shallow(<SimpleComponent />, { context });
+      const wrapper = mount(<SimpleComponent />, { context });
 
       expect(wrapper.context().name).to.equal(context.name);
       expect(wrapper.context('name')).to.equal(context.name);
@@ -59,8 +63,8 @@ describe('shallow', () => {
           <div className="qoo">{foo}</div>
         </div>
       );
-      const wrapper = shallow(<Foo foo="qux" />);
-      expect(wrapper.type()).to.equal('div');
+      const wrapper = mount(<Foo foo="qux" />);
+      expect(wrapper.type()).to.equal(Foo);
       expect(wrapper.find('.bar')).to.have.length(1);
       expect(wrapper.find('.qoo').text()).to.equal('qux');
     });
@@ -72,12 +76,12 @@ describe('shallow', () => {
       const a = <div className="foo" />;
       const b = <div className="foo" />;
       const c = <div className="bar" />;
-      expect(shallow(a).contains(b)).to.equal(true);
-      expect(shallow(a).contains(c)).to.equal(false);
+      expect(mount(a).contains(b)).to.equal(true);
+      expect(mount(a).contains(c)).to.equal(false);
     });
 
     it('should allow matches on a nested node', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div>
           <div className="foo" />
         </div>
@@ -90,7 +94,7 @@ describe('shallow', () => {
       class Foo extends React.Component {
         render() { return <div />; }
       }
-      const wrapper = shallow(
+      const wrapper = mount(
         <div>
           <Foo />
         </div>
@@ -99,40 +103,8 @@ describe('shallow', () => {
       expect(wrapper.contains(b)).to.equal(true);
     });
 
-    it('should work with strings', () => {
-      const wrapper = shallow(<div>foo</div>);
-
-      expect(wrapper.contains('foo')).to.equal(true);
-      expect(wrapper.contains('bar')).to.equal(false);
-    });
-
-    it('should work with numbers', () => {
-      const wrapper = shallow(<div>{1}</div>);
-
-      expect(wrapper.contains(1)).to.equal(true);
-      expect(wrapper.contains(2)).to.equal(false);
-      expect(wrapper.contains('1')).to.equal(false);
-    });
-
-    it('should work with nested strings & numbers', () => {
-      const wrapper = shallow(
-        <div>
-          <div>
-            <div>{5}</div>
-          </div>
-          <div>foo</div>
-        </div>
-      );
-
-      expect(wrapper.contains('foo')).to.equal(true);
-      expect(wrapper.contains(<div>foo</div>)).to.equal(true);
-
-      expect(wrapper.contains(5)).to.equal(true);
-      expect(wrapper.contains(<div>{5}</div>)).to.equal(true);
-    });
-
     it('should do something with arrays of nodes', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div>
           <span>Hello</span>
           <div>Goodbye</div>
@@ -155,64 +127,10 @@ describe('shallow', () => {
 
   });
 
-  describe('.equals(node)', () => {
-
-    it('should allow matches on the root node', () => {
-      const a = <div className="foo" />;
-      const b = <div className="foo" />;
-      const c = <div className="bar" />;
-      expect(shallow(a).equals(b)).to.equal(true);
-      expect(shallow(a).equals(c)).to.equal(false);
-    });
-
-    it('should NOT allow matches on a nested node', () => {
-      const wrapper = shallow(
-        <div>
-          <div className="foo" />
-        </div>
-      );
-      const b = <div className="foo" />;
-      expect(wrapper.equals(b)).to.equal(false);
-    });
-
-    it('should match composite components', () => {
-      class Foo extends React.Component {
-        render() { return <div />; }
-      }
-      const wrapper = shallow(
-        <div>
-          <Foo />
-        </div>
-      );
-      const b = <div><Foo /></div>;
-      expect(wrapper.equals(b)).to.equal(true);
-    });
-
-    it('should not expand `node` content', () => {
-      class Bar extends React.Component {
-        render() { return <div />; }
-      }
-
-      class Foo extends React.Component {
-        render() { return <Bar />; }
-      }
-
-      expect(shallow(<Foo />).equals(<Bar />)).to.equal(true);
-      expect(shallow(<Foo />).equals(<Foo />)).to.equal(false);
-    });
-
-  });
-
   describe('.find(selector)', () => {
 
-    it('should be able to match the root DOM element', () => {
-      const wrapper = shallow(<div id="ttt" className="ttt">hello</div>);
-      expect(wrapper.find('#ttt')).to.have.length(1);
-      expect(wrapper.find('.ttt')).to.have.length(1);
-    });
-
     it('should find an element based on a class name', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div>
           <input className="foo" />
         </div>
@@ -221,7 +139,7 @@ describe('shallow', () => {
     });
 
     it('should find an element based on a tag name', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div>
           <input className="foo" />
         </div>
@@ -233,7 +151,7 @@ describe('shallow', () => {
       class Foo extends React.Component {
         render() { return <div />; }
       }
-      const wrapper = shallow(
+      const wrapper = mount(
         <div>
           <Foo className="foo" />
         </div>
@@ -241,76 +159,31 @@ describe('shallow', () => {
       expect(wrapper.find(Foo).type()).to.equal(Foo);
     });
 
-    it('should find a component based on a display name', () => {
-      class Foo extends React.Component {
-        render() { return <div />; }
-      }
-      const wrapper = shallow(
-        <div>
-          <Foo className="foo" />
-        </div>
-      );
-      expect(wrapper.find('Foo').type()).to.equal(Foo);
-    });
-
-
-    it('should find multiple elements based on a class name', () => {
-      const wrapper = shallow(
-        <div>
-          <input className="foo" />
-          <button className="foo" />
-        </div>
-      );
-      expect(wrapper.find('.foo').length).to.equal(2);
-    });
-
-    it('should find multiple elements based on a tag name', () => {
-      const wrapper = shallow(
-        <div>
-          <input className="foo" />
-          <input />
-          <button />
-        </div>
-      );
-      expect(wrapper.find('input').length).to.equal(2);
-      expect(wrapper.find('button').length).to.equal(1);
-    });
-
     it('should find component based on a react prop', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div>
-          <span title="foo" />
+          <span htmlFor="foo" />
         </div>
       );
 
-      expect(wrapper.find('[title="foo"]')).to.have.length(1);
-      expect(wrapper.find('[title]')).to.have.length(1);
-    });
-
-    it('should error sensibly if prop selector without quotes', () => {
-      const wrapper = shallow(
-        <div>
-          <input type="text" />
-          <input type="hidden" />
-        </div>
-      );
-
-      expect(() => wrapper.find('[type=text]')).to.throw();
+      expect(wrapper.find('[htmlFor="foo"]')).to.have.length(1);
+      expect(wrapper.find('[htmlFor]')).to.have.length(1);
     });
 
     it('should compound tag and prop selector', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div>
-          <span preserveAspectRatio="xMaxYMax"/>
+          <span htmlFor="foo" />
         </div>
       );
 
-      expect(wrapper.find('span[preserveAspectRatio="xMaxYMax"]')).to.have.length(1);
-      expect(wrapper.find('span[preserveAspectRatio]')).to.have.length(1);
+      expect(wrapper.find('span[htmlFor="foo"]')).to.have.length(1);
+      expect(wrapper.find('span[htmlFor]')).to.have.length(1);
+
     });
 
     it('should support data prop selectors', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div>
           <span data-foo="bar" />
         </div>
@@ -320,21 +193,31 @@ describe('shallow', () => {
       expect(wrapper.find('[data-foo]')).to.have.length(1);
     });
 
-    it('should find components with multiple matching react props', () => {
-      function noop() {}
-      const wrapper = shallow(
+    it('should find components with multiple matching props', () => {
+      const onChange = () => ({});
+      const wrapper = mount(
         <div>
-          <span htmlFor="foo" onChange={noop} preserveAspectRatio="xMaxYMax" />
+          <span htmlFor="foo" onChange={onChange} preserveAspectRatio="xMaxYMax" />
         </div>
       );
 
       expect(wrapper.find('span[htmlFor="foo"][onChange]')).to.have.length(1);
       expect(wrapper.find('span[htmlFor="foo"][preserveAspectRatio="xMaxYMax"]')).to.have.length(1);
-      expect(wrapper.find('[htmlFor][preserveAspectRatio]')).to.have.length(1);
+    });
+
+
+    it('should not find property when undefined', () => {
+      const wrapper = mount(
+        <div>
+          <span data-foo={undefined} />
+        </div>
+      );
+
+      expect(wrapper.find('[data-foo]')).to.have.length(0);
     });
 
     it('should support boolean and numeric values for matching props', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div>
           <span value={1} />
           <a value={false} />
@@ -348,13 +231,20 @@ describe('shallow', () => {
     });
 
     it('should not find key or ref via property selector', () => {
-      const arrayOfComponents = [<div key="1" />, <div key="2" />];
-      const wrapper = shallow(
-        <div>
-          <div ref="foo" />
-          {arrayOfComponents}
-        </div>
-      );
+      class Foo extends React.Component {
+        render() {
+          const arrayOfComponents = [<div key="1" />, <div key="2" />];
+
+          return (
+            <div>
+              <div ref="foo" />
+              {arrayOfComponents}
+            </div>
+          );
+        }
+      }
+
+      const wrapper = mount(<Foo />);
 
       expect(wrapper.find('div[ref="foo"]')).to.have.length(0);
       expect(wrapper.find('div[key="1"]')).to.have.length(0);
@@ -362,8 +252,31 @@ describe('shallow', () => {
       expect(wrapper.find('[key]')).to.have.length(0);
     });
 
+
+    it('should find multiple elements based on a class name', () => {
+      const wrapper = mount(
+        <div>
+          <input className="foo" />
+          <button className="foo" />
+        </div>
+      );
+      expect(wrapper.find('.foo').length).to.equal(2);
+    });
+
+    it('should find multiple elements based on a tag name', () => {
+      const wrapper = mount(
+        <div>
+          <input className="foo" />
+          <input />
+          <button />
+        </div>
+      );
+      expect(wrapper.find('input').length).to.equal(2);
+      expect(wrapper.find('button').length).to.equal(1);
+    });
+
     it('should find multiple elements based on a constructor', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div>
           <input className="foo" />
           <input />
@@ -375,7 +288,7 @@ describe('shallow', () => {
     });
 
     it('should throw on a complex selector', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div>
           <input className="foo" />
           <input />
@@ -386,7 +299,7 @@ describe('shallow', () => {
     });
 
     it('should support object property selectors', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div>
           <input data-test="ref" className="foo" type="text" />
           <input data-test="ref" type="text"/>
@@ -409,7 +322,7 @@ describe('shallow', () => {
 
     it('should support complex and nested object property selectors', () => {
       const testFunction = () => ({});
-      const wrapper = shallow(
+      const wrapper = mount(
         <div>
           <span more={[{ id: 1 }]} data-test="ref" prop onChange={testFunction} />
           <a more={[{ id: 1 }]} data-test="ref" />
@@ -428,7 +341,7 @@ describe('shallow', () => {
     });
 
     it('should throw when given empty object, null, or an array', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div>
           <input className="foo" type="text" />
         </div>
@@ -442,7 +355,7 @@ describe('shallow', () => {
   describe('.findWhere(predicate)', () => {
 
     it('should return all elements for a truthy test', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div>
           <input className="foo" />
           <input />
@@ -452,7 +365,7 @@ describe('shallow', () => {
     });
 
     it('should return no elements for a falsy test', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div>
           <input className="foo" />
           <input />
@@ -462,7 +375,7 @@ describe('shallow', () => {
     });
 
     it('should call the predicate with the wrapped node as the first argument', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div>
           <div className="foo bar" />
           <div className="foo baz" />
@@ -475,10 +388,10 @@ describe('shallow', () => {
       const spy = sinon.spy(stub);
       wrapper.findWhere(spy);
       expect(spy.callCount).to.equal(4);
-      expect(spy.args[0][0]).to.be.instanceOf(ShallowWrapper);
-      expect(spy.args[1][0]).to.be.instanceOf(ShallowWrapper);
-      expect(spy.args[2][0]).to.be.instanceOf(ShallowWrapper);
-      expect(spy.args[3][0]).to.be.instanceOf(ShallowWrapper);
+      expect(spy.args[0][0]).to.be.instanceOf(ReactWrapper);
+      expect(spy.args[1][0]).to.be.instanceOf(ReactWrapper);
+      expect(spy.args[2][0]).to.be.instanceOf(ReactWrapper);
+      expect(spy.args[3][0]).to.be.instanceOf(ReactWrapper);
       expect(spy.args[1][0].hasClass('bar')).to.equal(true);
       expect(spy.args[2][0].hasClass('baz')).to.equal(true);
       expect(spy.args[3][0].hasClass('bux')).to.equal(true);
@@ -498,7 +411,7 @@ describe('shallow', () => {
           );
         }
       }
-      const wrapper = shallow(<Foo id="foo" />);
+      const wrapper = mount(<Foo id="foo" />);
       expect(wrapper.find('.foo').length).to.equal(1);
       wrapper.setProps({ id: 'bar', foo: 'bla' });
       expect(wrapper.find('.bar').length).to.equal(1);
@@ -522,7 +435,7 @@ describe('shallow', () => {
         }
       }
       const nextProps = { id: 'bar', foo: 'bla' };
-      const wrapper = shallow(<Foo id="foo" />);
+      const wrapper = mount(<Foo id="foo" />);
       expect(spy.calledOnce).to.equal(false);
       wrapper.setProps(nextProps);
       expect(spy.calledOnce).to.equal(true);
@@ -538,7 +451,7 @@ describe('shallow', () => {
         }
       }
 
-      const wrapper = shallow(<Foo a="a" b="b" />);
+      const wrapper = mount(<Foo a="a" b="b" />);
       expect(wrapper.props().a).to.equal('a');
       expect(wrapper.props().b).to.equal('b');
 
@@ -548,24 +461,6 @@ describe('shallow', () => {
       expect(wrapper.props().d).to.equal('e');
     });
 
-    it('should pass in old context', () => {
-      class Foo extends React.Component {
-        render() {
-          return (
-            <div>{this.context.x}</div>
-          );
-        }
-      }
-
-      Foo.contextTypes = { x: React.PropTypes.string };
-
-      const context = { x: 'yolo' };
-      const wrapper = shallow(<Foo x={5} />, { context });
-      expect(wrapper.first('div').text()).to.equal('yolo');
-
-      wrapper.setProps({ x: 5 }); // Just force a re-render
-      expect(wrapper.first('div').text()).to.equal('yolo');
-    });
   });
 
   describe('.setContext(newContext)', () => {
@@ -580,7 +475,7 @@ describe('shallow', () => {
 
     it('should set context for a component multiple times', () => {
       const context = { name: 'foo' };
-      const wrapper = shallow(<SimpleComponent />, { context });
+      const wrapper = mount(<SimpleComponent />, { context });
       expect(wrapper.text()).to.equal('foo');
       wrapper.setContext({ name: 'bar' });
       expect(wrapper.text()).to.equal('bar');
@@ -589,9 +484,71 @@ describe('shallow', () => {
     });
 
     it('should throw if it is called when shallow didnt include context', () => {
-      const wrapper = shallow(<SimpleComponent />);
+      const wrapper = mount(<SimpleComponent />);
       expect(() => wrapper.setContext({ name: 'bar' })).to.throw(Error);
     });
+  });
+
+
+  describe('.mount()', () => {
+    it('should call componentWillUnmount()', () => {
+      const willMount = sinon.spy();
+      const didMount = sinon.spy();
+      const willUnmount = sinon.spy();
+
+      class Foo extends React.Component {
+        constructor(props) {
+          super(props);
+          this.componentWillUnmount = willUnmount;
+          this.componentWillMount = willMount;
+          this.componentDidMount = didMount;
+        }
+        render() {
+          return (
+            <div className={this.props.id}>
+              {this.props.id}
+            </div>
+          );
+        }
+      }
+      const wrapper = mount(<Foo id="foo" />);
+      expect(willMount.callCount).to.equal(1);
+      expect(didMount.callCount).to.equal(1);
+      expect(willUnmount.callCount).to.equal(0);
+      wrapper.unmount();
+      expect(willMount.callCount).to.equal(1);
+      expect(didMount.callCount).to.equal(1);
+      expect(willUnmount.callCount).to.equal(1);
+      wrapper.mount();
+      expect(willMount.callCount).to.equal(2);
+      expect(didMount.callCount).to.equal(2);
+      expect(willUnmount.callCount).to.equal(1);
+    });
+  });
+
+  describe('.unmount()', () => {
+    it('should call componentWillUnmount()', () => {
+      const spy = sinon.spy();
+
+      class Foo extends React.Component {
+        constructor(props) {
+          super(props);
+          this.componentWillUnmount = spy;
+        }
+        render() {
+          return (
+            <div className={this.props.id}>
+              {this.props.id}
+            </div>
+          );
+        }
+      }
+      const wrapper = mount(<Foo id="foo" />);
+      expect(spy.calledOnce).to.equal(false);
+      wrapper.unmount();
+      expect(spy.calledOnce).to.equal(true);
+    });
+
   });
 
   describe('.simulate(eventName, data)', () => {
@@ -614,19 +571,20 @@ describe('shallow', () => {
             <a
               className={`clicks-${this.state.count}`}
               onClick={this.incrementCount}
-            >foo</a>
+            >
+              foo
+            </a>
           );
         }
       }
 
-      const wrapper = shallow(<Foo />);
+      const wrapper = mount(<Foo />);
 
       expect(wrapper.find('.clicks-0').length).to.equal(1);
       wrapper.simulate('click');
       expect(wrapper.find('.clicks-1').length).to.equal(1);
 
     });
-
 
     it('should pass in event data', () => {
       const spy = sinon.spy();
@@ -638,13 +596,17 @@ describe('shallow', () => {
         }
       }
 
-      const wrapper = shallow(<Foo />);
-      const a = {};
-      const b = {};
+      const wrapper = mount(<Foo />);
 
-      wrapper.simulate('click', a, b);
-      expect(spy.args[0][0]).to.equal(a);
-      expect(spy.args[0][1]).to.equal(b);
+      wrapper.simulate('click', { someSpecialData: 'foo' });
+      expect(spy.calledOnce).to.equal(true);
+      expect(spy.args[0][0].someSpecialData).to.equal('foo');
+    });
+
+    it('should throw a descriptive error for invalid events', () => {
+      const wrapper = mount(<div>foo</div>);
+      expect(wrapper.simulate.bind(wrapper, 'invalidEvent'))
+        .to.throw(TypeError, "ReactWrapper::simulate() event 'invalidEvent' does not exist");
     });
 
     describe('Normalizing JS event names', () => {
@@ -658,7 +620,7 @@ describe('shallow', () => {
           }
         }
 
-        const wrapper = shallow(<Foo />);
+        const wrapper = mount(<Foo />);
 
         wrapper.simulate('doubleclick');
         expect(spy.calledOnce).to.equal(true);
@@ -675,14 +637,13 @@ describe('shallow', () => {
             }
           }
 
-          const wrapper = shallow(<Foo />);
+          const wrapper = mount(<Foo />);
 
           wrapper.simulate('mouseenter');
           expect(spy.calledOnce).to.equal(true);
         });
       });
     });
-
   });
 
   describe('.setState(newState)', () => {
@@ -698,33 +659,52 @@ describe('shallow', () => {
           );
         }
       }
-      const wrapper = shallow(<Foo />);
+      const wrapper = mount(<Foo />);
       expect(wrapper.find('.foo').length).to.equal(1);
       wrapper.setState({ id: 'bar' });
       expect(wrapper.find('.bar').length).to.equal(1);
+    });
+
+    it('allows setState inside of componentDidMount', () => {
+      // NOTE: this test is a test to ensure that the following issue is
+      // fixed: https://github.com/airbnb/enzyme/issues/27
+      class MySharona extends React.Component {
+        constructor(props) {
+          super(props);
+          this.state = { mounted: false };
+        }
+        componentDidMount() {
+          this.setState({ mounted: true });
+        }
+        render() {
+          return <div>{this.state.mounted ? 'a' : 'b'}</div>;
+        }
+      }
+      const wrapper = mount(<MySharona />);
+      expect(wrapper.find('div').text()).to.equal('a');
     });
   });
 
   describe('.is(selector)', () => {
     it('should return true when selector matches current element', () => {
-      const wrapper = shallow(<div className="foo bar baz" />);
+      const wrapper = mount(<div className="foo bar baz" />);
       expect(wrapper.is('.foo')).to.equal(true);
     });
 
     it('should allow for compound selectors', () => {
-      const wrapper = shallow(<div className="foo bar baz" />);
+      const wrapper = mount(<div className="foo bar baz" />);
       expect(wrapper.is('.foo.bar')).to.equal(true);
     });
 
     it('should return false when selector does not match', () => {
-      const wrapper = shallow(<div className="bar baz" />);
+      const wrapper = mount(<div className="bar baz" />);
       expect(wrapper.is('.foo')).to.equal(false);
     });
   });
 
   describe('.not(selector)', () => {
     it('filters to things not matching a selector', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div>
           <div className="foo bar baz" />
           <div className="foo" />
@@ -742,7 +722,7 @@ describe('shallow', () => {
 
   describe('.filter(selector)', () => {
     it('should return a new wrapper of just the nodes that matched the selector', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div>
           <div className="foo bar baz" />
           <div className="foo" />
@@ -762,7 +742,7 @@ describe('shallow', () => {
     });
 
     it('should only look in the current wrappers nodes, not their children', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div>
           <div className="foo">
             <div className="bar" />
@@ -777,7 +757,7 @@ describe('shallow', () => {
 
   describe('.filterWhere(predicate)', () => {
     it('should filter only the nodes of the wrapper', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div>
           <div className="foo bar" />
           <div className="foo baz" />
@@ -795,8 +775,8 @@ describe('shallow', () => {
       expect(baz.hasClass('baz')).to.equal(true);
     });
 
-    it('should call the predicate with the wrapped node as the first argument', () => {
-      const wrapper = shallow(
+    it('should call the predicate with the wrapper as the first argument', () => {
+      const wrapper = mount(
         <div>
           <div className="foo bar" />
           <div className="foo baz" />
@@ -809,9 +789,9 @@ describe('shallow', () => {
       const spy = sinon.spy(stub);
       wrapper.find('.foo').filterWhere(spy);
       expect(spy.callCount).to.equal(3);
-      expect(spy.args[0][0]).to.be.instanceOf(ShallowWrapper);
-      expect(spy.args[1][0]).to.be.instanceOf(ShallowWrapper);
-      expect(spy.args[2][0]).to.be.instanceOf(ShallowWrapper);
+      expect(spy.args[0][0]).to.be.instanceOf(ReactWrapper);
+      expect(spy.args[1][0]).to.be.instanceOf(ReactWrapper);
+      expect(spy.args[2][0]).to.be.instanceOf(ReactWrapper);
       expect(spy.args[0][0].hasClass('bar')).to.equal(true);
       expect(spy.args[1][0].hasClass('baz')).to.equal(true);
       expect(spy.args[2][0].hasClass('bux')).to.equal(true);
@@ -821,13 +801,13 @@ describe('shallow', () => {
   describe('.text()', () => {
 
     const matchesRender = function matchesRender(node) {
-      const actual = shallow(node).text();
+      const actual = mount(node).text();
       const expected = render(node).text();
       expect(expected).to.equal(actual);
     };
 
     it('should handle simple text nodes', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div>some text</div>
       );
       expect(wrapper.text()).to.equal('some text');
@@ -855,17 +835,17 @@ describe('shallow', () => {
       );
     });
 
-    it('should render composite components dumbly', () => {
+    it('should render composite components smartly', () => {
       class Foo extends React.Component {
-        render() { return <div/>; }
+        render() { return <div>foo</div>; }
       }
-      const wrapper = shallow(
+      const wrapper = mount(
         <div>
           <Foo />
           <div>test</div>
         </div>
       );
-      expect(wrapper.text()).to.equal('<Foo />test');
+      expect(wrapper.text()).to.equal('footest');
     });
 
     it('should handle html entities', () => {
@@ -878,7 +858,7 @@ describe('shallow', () => {
 
     it('should return the props object', () => {
       const fn = () => ({});
-      const wrapper = shallow(
+      const wrapper = mount(
         <div id="fooId" className="bax" onClick={fn} >
           <div className="baz" />
           <div className="foo" />
@@ -893,7 +873,7 @@ describe('shallow', () => {
 
     it('should be allowed to be used on an inner node', () => {
       const fn = () => ({});
-      const wrapper = shallow(
+      const wrapper = mount(
         <div className="bax">
           <div className="baz" onClick={fn} />
           <div className="foo" id="fooId" />
@@ -915,7 +895,7 @@ describe('shallow', () => {
         }
         render() { return <div />; }
       }
-      const wrapper = shallow(<Foo />);
+      const wrapper = mount(<Foo />);
       expect(wrapper.state()).to.eql({ foo: 'foo' });
     });
 
@@ -927,7 +907,7 @@ describe('shallow', () => {
         }
         render() { return <div />; }
       }
-      const wrapper = shallow(<Foo />);
+      const wrapper = mount(<Foo />);
       wrapper.setState({ foo: 'bar' });
       expect(wrapper.state()).to.eql({ foo: 'bar' });
     });
@@ -940,19 +920,19 @@ describe('shallow', () => {
         }
         render() { return <div />; }
       }
-      const wrapper = shallow(<Foo />);
+      const wrapper = mount(<Foo />);
       expect(wrapper.state('foo')).to.equal('foo');
     });
   });
 
   describe('.children([selector])', () => {
     it('should return empty wrapper for node with no children', () => {
-      const wrapper = shallow(<div />);
+      const wrapper = mount(<div />);
       expect(wrapper.children().length).to.equal(0);
     });
 
     it('should return the children nodes of the root', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div>
           <div className="foo" />
           <div className="bar" />
@@ -966,7 +946,7 @@ describe('shallow', () => {
     });
 
     it('should not return any of the children of children', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div>
           <div className="foo">
             <div className="bar" />
@@ -990,7 +970,7 @@ describe('shallow', () => {
           );
         }
       }
-      const wrapper = shallow(
+      const wrapper = mount(
         <Foo
           items={[
             <i key={1} className="bar">abc</i>,
@@ -1005,7 +985,7 @@ describe('shallow', () => {
     });
 
     it('should optionally allow a selector to filter by', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div>
           <div className="foo" />
           <div className="bar bip" />
@@ -1021,7 +1001,7 @@ describe('shallow', () => {
 
   describe('.parents([selector])', () => {
     it('should return an array of current nodes ancestors', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div className="bax">
           <div className="foo">
             <div className="bar">
@@ -1041,7 +1021,7 @@ describe('shallow', () => {
     });
 
     it('should work for non-leaf nodes as well', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div className="bax">
           <div className="foo">
             <div className="bar">
@@ -1059,7 +1039,7 @@ describe('shallow', () => {
     });
 
     it('should optionally allow a selector', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div className="bax foo">
           <div className="foo">
             <div className="bar">
@@ -1079,7 +1059,7 @@ describe('shallow', () => {
 
   describe('.parent()', () => {
     it('should return only the immediate parent of the node', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div className="bax">
           <div className="foo">
             <div className="bar">
@@ -1093,7 +1073,7 @@ describe('shallow', () => {
     });
 
     it('should work for multiple nodes', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div>
           <div className="foo">
             <div className="baz" />
@@ -1117,7 +1097,7 @@ describe('shallow', () => {
 
   describe('.closest(selector)', () => {
     it('should return the closest ancestor for a given selector', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div className="foo">
           <div className="foo baz">
             <div className="bax">
@@ -1133,7 +1113,7 @@ describe('shallow', () => {
     });
 
     it('should only ever return a wrapper of a single node', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div className="bax">
           <div className="foo">
             <div className="bar">
@@ -1147,7 +1127,7 @@ describe('shallow', () => {
     });
 
     it('should return itself if matching', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div className="bax">
           <div className="foo">
             <div className="baz">
@@ -1163,7 +1143,7 @@ describe('shallow', () => {
 
   describe('.hasClass(className)', () => {
     it('should return whether or not node has a certain class', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div className="foo bar baz some-long-string FoOo" />
       );
 
@@ -1178,7 +1158,7 @@ describe('shallow', () => {
 
   describe('.forEach(fn)', () => {
     it('should call a function for each node in the wrapper', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div>
           <div className="foo bax" />
           <div className="foo bar" />
@@ -1190,18 +1170,18 @@ describe('shallow', () => {
       wrapper.find('.foo').forEach(spy);
 
       expect(spy.callCount).to.equal(3);
-      expect(spy.args[0][0]).to.be.instanceOf(ShallowWrapper);
+      expect(spy.args[0][0]).to.be.instanceOf(ReactWrapper);
       expect(spy.args[0][0].hasClass('bax')).to.equal(true);
-      expect(spy.args[1][0]).to.be.instanceOf(ShallowWrapper);
+      expect(spy.args[1][0]).to.be.instanceOf(ReactWrapper);
       expect(spy.args[1][0].hasClass('bar')).to.equal(true);
-      expect(spy.args[2][0]).to.be.instanceOf(ShallowWrapper);
+      expect(spy.args[2][0]).to.be.instanceOf(ReactWrapper);
       expect(spy.args[2][0].hasClass('baz')).to.equal(true);
     });
   });
 
   describe('.map(fn)', () => {
     it('should call a function with a wrapper for each node in the wrapper', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div>
           <div className="foo bax" />
           <div className="foo bar" />
@@ -1213,16 +1193,16 @@ describe('shallow', () => {
       wrapper.find('.foo').map(spy);
 
       expect(spy.callCount).to.equal(3);
-      expect(spy.args[0][0]).to.be.instanceOf(ShallowWrapper);
+      expect(spy.args[0][0]).to.be.instanceOf(ReactWrapper);
       expect(spy.args[0][0].hasClass('bax')).to.equal(true);
-      expect(spy.args[1][0]).to.be.instanceOf(ShallowWrapper);
+      expect(spy.args[1][0]).to.be.instanceOf(ReactWrapper);
       expect(spy.args[1][0].hasClass('bar')).to.equal(true);
-      expect(spy.args[2][0]).to.be.instanceOf(ShallowWrapper);
+      expect(spy.args[2][0]).to.be.instanceOf(ReactWrapper);
       expect(spy.args[2][0].hasClass('baz')).to.equal(true);
     });
 
     it('should return an array with the mapped values', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div>
           <div className="foo bax" />
           <div className="foo bar" />
@@ -1241,7 +1221,7 @@ describe('shallow', () => {
 
   describe('.reduce(fn[, initialValue])', () => {
     it('should call a function with a wrapper for each node in the wrapper', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div>
           <div className="foo bax" />
           <div className="foo bar" />
@@ -1253,29 +1233,26 @@ describe('shallow', () => {
       wrapper.find('.foo').reduce(spy, 0);
 
       expect(spy.callCount).to.equal(3);
-      expect(spy.args[0][1]).to.be.instanceOf(ShallowWrapper);
+      expect(spy.args[0][1]).to.be.instanceOf(ReactWrapper);
       expect(spy.args[0][1].hasClass('bax')).to.equal(true);
-      expect(spy.args[1][1]).to.be.instanceOf(ShallowWrapper);
+      expect(spy.args[1][1]).to.be.instanceOf(ReactWrapper);
       expect(spy.args[1][1].hasClass('bar')).to.equal(true);
-      expect(spy.args[2][1]).to.be.instanceOf(ShallowWrapper);
+      expect(spy.args[2][1]).to.be.instanceOf(ReactWrapper);
       expect(spy.args[2][1].hasClass('baz')).to.equal(true);
     });
 
     it('should accumulate a value', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div>
           <div id="bax" className="foo qoo" />
           <div id="bar" className="foo boo" />
           <div id="baz" className="foo hoo" />
         </div>
       );
-      const result = wrapper.find('.foo').reduce(
-        (obj, n) => {
-          obj[n.prop('id')] = n.prop('className');
-          return obj;
-        },
-        {}
-      );
+      const result = wrapper.find('.foo').reduce((obj, n) => {
+        obj[n.prop('id')] = n.prop('className');
+        return obj;
+      }, {});
 
       expect(result).to.eql({
         bax: 'foo qoo',
@@ -1287,7 +1264,7 @@ describe('shallow', () => {
 
   describe('.reduceRight(fn[, initialValue])', () => {
     it('should call a function with a wrapper for each node in the wrapper in reverse', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div>
           <div className="foo bax" />
           <div className="foo bar" />
@@ -1299,29 +1276,26 @@ describe('shallow', () => {
       wrapper.find('.foo').reduceRight(spy, 0);
 
       expect(spy.callCount).to.equal(3);
-      expect(spy.args[0][1]).to.be.instanceOf(ShallowWrapper);
+      expect(spy.args[0][1]).to.be.instanceOf(ReactWrapper);
       expect(spy.args[0][1].hasClass('baz')).to.equal(true);
-      expect(spy.args[1][1]).to.be.instanceOf(ShallowWrapper);
+      expect(spy.args[1][1]).to.be.instanceOf(ReactWrapper);
       expect(spy.args[1][1].hasClass('bar')).to.equal(true);
-      expect(spy.args[2][1]).to.be.instanceOf(ShallowWrapper);
+      expect(spy.args[2][1]).to.be.instanceOf(ReactWrapper);
       expect(spy.args[2][1].hasClass('bax')).to.equal(true);
     });
 
     it('should accumulate a value', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div>
           <div id="bax" className="foo qoo" />
           <div id="bar" className="foo boo" />
           <div id="baz" className="foo hoo" />
         </div>
       );
-      const result = wrapper.find('.foo').reduceRight(
-        (obj, n) => {
-          obj[n.prop('id')] = n.prop('className');
-          return obj;
-        },
-        {}
-      );
+      const result = wrapper.find('.foo').reduceRight((obj, n) => {
+        obj[n.prop('id')] = n.prop('className');
+        return obj;
+      }, {});
 
       expect(result).to.eql({
         bax: 'foo qoo',
@@ -1333,7 +1307,7 @@ describe('shallow', () => {
 
   describe('.some(selector)', () => {
     it('should return if a node matches a selector', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div>
           <div className="foo qoo" />
           <div className="foo boo" />
@@ -1348,7 +1322,7 @@ describe('shallow', () => {
 
   describe('.someWhere(predicate)', () => {
     it('should return if a node matches a predicate', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div>
           <div className="foo qoo" />
           <div className="foo boo" />
@@ -1363,7 +1337,7 @@ describe('shallow', () => {
 
   describe('.every(selector)', () => {
     it('should return if every node matches a selector', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div>
           <div className="foo qoo" />
           <div className="foo boo" />
@@ -1378,7 +1352,7 @@ describe('shallow', () => {
 
   describe('.everyWhere(predicate)', () => {
     it('should return if every node matches a predicate', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div>
           <div className="foo qoo" />
           <div className="foo boo" />
@@ -1393,7 +1367,7 @@ describe('shallow', () => {
 
   describe('.flatMap(fn)', () => {
     it('should return a wrapper with the mapped and flattened nodes', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div>
           <div className="foo">
             <div className="bar" />
@@ -1422,38 +1396,9 @@ describe('shallow', () => {
     });
   });
 
-  describe('.shallow()', () => {
-
-    it('should return a shallow rendered instance of the current node', () => {
-      class Bar extends React.Component {
-        render() {
-          return (
-            <div>
-              <div className="in-bar" />
-            </div>
-          );
-        }
-      }
-      class Foo extends React.Component {
-        render() {
-          return (
-            <div>
-              <Bar />
-            </div>
-          );
-        }
-      }
-      const wrapper = shallow(<Foo />);
-      expect(wrapper.find('.in-bar')).to.have.length(0);
-      expect(wrapper.find(Bar)).to.have.length(1);
-      expect(wrapper.find(Bar).shallow().find('.in-bar')).to.have.length(1);
-    });
-
-  });
-
   describe('.first()', () => {
     it('should return the first node in the current set', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div>
           <div className="bar baz" />
           <div className="bar" />
@@ -1467,7 +1412,7 @@ describe('shallow', () => {
 
   describe('.last()', () => {
     it('should return the last node in the current set', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div>
           <div className="bar" />
           <div className="bar" />
@@ -1481,7 +1426,7 @@ describe('shallow', () => {
 
   describe('.isEmpty()', () => {
     it('should return true iff wrapper is empty', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div className="foo" />
       );
       expect(wrapper.find('.bar').isEmpty()).to.equal(true);
@@ -1491,7 +1436,7 @@ describe('shallow', () => {
 
   describe('.at(index)', () => {
     it('gets a wrapper of the node at the specified index', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div>
           <div className="bar foo" />
           <div className="bar bax" />
@@ -1508,7 +1453,7 @@ describe('shallow', () => {
 
   describe('.get(index)', () => {
     it('gets the node at the specified index', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div>
           <div className="bar foo" />
           <div className="bar bax" />
@@ -1523,15 +1468,29 @@ describe('shallow', () => {
     });
   });
 
-  describe('.debug()', () => {
-    it('should pass through to the debugNodes function', () => {
-      expect(shallow(<div />).debug()).to.equal('<div />');
+  describe('.ref(refName)', () => {
+    it('gets a wrapper of the node matching the provided refName', () => {
+
+      class Foo extends React.Component {
+        render() {
+          return (
+            <div>
+              <span ref="firstRef" amount={2}>First</span>
+              <span ref="secondRef" amount={4}>Second</span>
+              <span ref="thirdRef" amount={8}>Third</span>
+            </div>
+          );
+        }
+      }
+      const wrapper = mount(<Foo />);
+      expect(wrapper.ref('secondRef').prop('amount')).to.equal(4);
+      expect(wrapper.ref('secondRef').text()).to.equal('Second');
     });
   });
 
   describe('.html()', () => {
     it('should return html of straight DOM elements', () => {
-      const wrapper = shallow(
+      const wrapper = mount(
         <div className="test">
           <span>Hello World!</span>
         </div>
@@ -1556,7 +1515,7 @@ describe('shallow', () => {
           );
         }
       }
-      const wrapper = shallow(<Bar />);
+      const wrapper = mount(<Bar />);
       expect(wrapper.html()).to.equal(
         `<div class="in-bar"><div class="in-foo"></div></div>`
       );
@@ -1564,11 +1523,9 @@ describe('shallow', () => {
         `<div class="in-foo"></div>`
       );
     });
-
   });
 
   describe('.render()', () => {
-
     it('should return a cheerio wrapper around the current node', () => {
       class Foo extends React.Component {
         render() {
@@ -1584,13 +1541,99 @@ describe('shallow', () => {
           );
         }
       }
-      const wrapper = shallow(<Bar />);
-      expect(wrapper.render().find('.in-bar')).to.have.length(1);
-      const renderedFoo = wrapper.find(Foo).render();
-      expect(renderedFoo.find('.in-foo')).to.have.length(1);
-      expect(renderedFoo.find('.in-bar')).to.have.length(0);
+      const wrapper = mount(<Bar />);
+      expect(wrapper.render().find('.in-foo')).to.have.length(1);
+    });
+  });
+
+  describe('attachTo option', () => {
+    it('should attach and stuff', () => {
+      class Foo extends React.Component {
+        render() {
+          return (<div className="in-foo" />);
+        }
+      }
+      const div = global.document.createElement('div');
+      global.document.body.appendChild(div);
+
+      expect(document.body.childNodes).to.have.length(1);
+      expect(div.childNodes).to.have.length(0);
+
+      const wrapper = mount(<Foo />, { attachTo: div });
+
+      expect(wrapper.find('.in-foo')).to.have.length(1);
+      expect(document.body.childNodes).to.have.length(1);
+      expect(div.childNodes).to.have.length(1);
+
+      wrapper.detach();
+
+      expect(document.body.childNodes).to.have.length(1);
+      expect(div.childNodes).to.have.length(0);
+
+      global.document.body.removeChild(div);
+
+      expect(document.body.childNodes).to.have.length(0);
+      expect(div.childNodes).to.have.length(0);
     });
 
+    it('should allow for multiple attaches/detaches on same node', () => {
+      class Foo extends React.Component {
+        render() {
+          return (<div className="in-foo" />);
+        }
+      }
+      class Bar extends React.Component {
+        render() {
+          return (<section className="in-bar" />);
+        }
+      }
+      let wrapper;
+      const div = global.document.createElement('div');
+      global.document.body.appendChild(div);
+
+      expect(document.body.childNodes).to.have.length(1);
+      expect(div.childNodes).to.have.length(0);
+
+      wrapper = mount(<Foo />, { attachTo: div });
+
+      expect(wrapper.find('.in-foo')).to.have.length(1);
+      expect(document.body.childNodes).to.have.length(1);
+      expect(div.childNodes).to.have.length(1);
+
+      wrapper.detach();
+
+      wrapper = mount(<Bar />, { attachTo: div });
+
+      expect(wrapper.find('.in-bar')).to.have.length(1);
+      expect(document.body.childNodes).to.have.length(1);
+      expect(div.childNodes).to.have.length(1);
+
+      wrapper.detach();
+
+      expect(document.body.childNodes).to.have.length(1);
+      expect(div.childNodes).to.have.length(0);
+
+      global.document.body.removeChild(div);
+
+      expect(document.body.childNodes).to.have.length(0);
+      expect(div.childNodes).to.have.length(0);
+    });
+
+    it('will attach to the body successfully', () => {
+      class Bar extends React.Component {
+        render() {
+          return (<section className="in-bar" />);
+        }
+      }
+      const wrapper = mount(<Bar />, { attachTo: document.body });
+
+      expect(wrapper.find('.in-bar')).to.have.length(1);
+      expect(document.body.childNodes).to.have.length(1);
+
+      wrapper.detach();
+
+      expect(document.body.childNodes).to.have.length(0);
+    });
   });
 
 });

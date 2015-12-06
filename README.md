@@ -20,6 +20,11 @@ If you are interested in using enzyme with custom Chai.js assertions and conveni
 testing your React components, you can consider using [chai-enzyme](https://github.com/producthunt/chai-enzyme).
 
 
+[Using Enzyme with Mocha](/docs/guides/mocha.md)
+[Using Enzyme with Karma](/docs/guides/karma.md)
+[Using Enzyme with Jasmine](/docs/guides/jasmine.md)
+
+
 ### [Installation](/docs/installation/README.md)
 
 To get started with enzyme, you can simply install it with npm:
@@ -46,6 +51,7 @@ Basic Usage
 ## [Shallow Rendering](/docs/api/shallow.md)
 
 ```jsx
+import React from 'react';
 import { shallow } from 'enzyme';
 import sinon from 'sinon';
 
@@ -86,22 +92,14 @@ Read the full [API Documentation](/docs/api/shallow.md)
 
 
 
-## [JSDOM Full Rendering](/docs/api/mount.md)
+## [Full DOM Rendering](/docs/api/mount.md)
 
 ```jsx
-import {
-  describeWithDOM,
-  mount,
-  spyLifecycle,
-} from 'enzyme';
+import React from 'react';
+import sinon from 'sinon';
+import { mount } from 'enzyme';
 
-describeWithDOM('<Foo />', () => {
-
-  it('calls componentDidMount', () => {
-    spyLifecycle(Foo);
-    const wrapper = mount(<Foo />);
-    expect(Foo.prototype.componentDidMount.calledOnce).to.equal(true);
-  });
+describe('<Foo />', () => {
 
   it('allows us to set props', () => {
     const wrapper = mount(<Foo bar="baz" />);
@@ -118,6 +116,13 @@ describeWithDOM('<Foo />', () => {
     wrapper.find('button').simulate('click');
     expect(onButtonClick.calledOnce).to.equal(true);
   });
+  
+  it('calls componentDidMount', () => {
+    sinon.spy(Foo.prototype, 'componentDidMount');
+    const wrapper = mount(<Foo />);
+    expect(Foo.prototype.componentDidMount.calledOnce).to.be.true;
+    Foo.prototype.componentDidMount.restore();
+  });
 
 });
 ```
@@ -128,6 +133,7 @@ Read the full [API Documentation](/docs/api/mount.md)
 ## [Static Rendered Markup](/docs/api/render.md)
 
 ```jsx
+import React from 'react';
 import { render } from 'enzyme';
 
 describe('<Foo />', () => {
